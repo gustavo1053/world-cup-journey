@@ -20,13 +20,18 @@ export default function Admin() {
 
   const [importing, setImporting] = useState(false)
   const [importMsg, setImportMsg] = useState('')
+  const [importLeague, setImportLeague] = useState('1')
+  const [importSeason, setImportSeason] = useState('2026')
+  const [importCustomId, setImportCustomId] = useState('')
 
   const handleImport = async () => {
+    const leagueId = importLeague === 'custom' ? importCustomId : importLeague
+    if (!leagueId) return setMsg('Ingresá un ID de liga')
     setImporting(true)
     setImportMsg('Iniciando importación...')
-    const result = await importWorldCupFixtures((msg) => setImportMsg(msg))
+    const result = await importWorldCupFixtures((msg) => setImportMsg(msg), leagueId, importSeason)
     if (result.success) {
-      setMsg(`✓ ${result.count} partidos importados${result.demo ? ' (Mundial 2022 demo)' : ''}`)
+      setMsg(`✓ ${result.count} partidos importados`)
     } else {
       setMsg('Error: ' + result.error)
     }
@@ -145,14 +150,46 @@ export default function Admin() {
 
         {tab === 'partidos' && (
           <>
-            <div className={`card ${styles.formCard}`} style={{marginBottom:'12px',display:'flex',alignItems:'center',justifyContent:'space-between',gap:'12px'}}>
-              <div>
-                <div style={{fontWeight:500,fontSize:'14px'}}>Importar partidos automáticamente</div>
-                <div style={{fontSize:'12px',color:'var(--muted)',marginTop:'3px'}}>Trae todos los partidos del Mundial desde API-Football</div>
-                {importMsg && <div style={{fontSize:'12px',color:'var(--green)',marginTop:'6px'}}>⏳ {importMsg}</div>}
+            <div className={`card ${styles.formCard}`} style={{marginBottom:'12px'}}>
+              <div style={{fontWeight:500,fontSize:'14px',marginBottom:'12px'}}>⬇ Importar competición</div>
+              <div className={styles.grid2} style={{marginBottom:'10px'}}>
+                <div className="form-group">
+                  <label>Liga</label>
+                  <select value={importLeague} onChange={e=>setImportLeague(e.target.value)} style={{width:'100%',padding:'11px 14px',borderRadius:'var(--radius)',border:'1px solid var(--border)',background:'var(--card2)',color:'var(--text)',fontSize:'14px',outline:'none',fontFamily:'DM Sans,sans-serif'}}>
+                    <option value="1">🌍 Copa Mundial FIFA</option>
+                    <option value="13">🏆 Copa Libertadores</option>
+                    <option value="11">🌎 Copa América</option>
+                    <option value="2">⭐ Champions League</option>
+                    <option value="3">🥈 Europa League</option>
+                    <option value="39">🏴󠁧󠁢󠁥󠁮󠁧󠁿 Premier League</option>
+                    <option value="140">🇪🇸 La Liga</option>
+                    <option value="135">🇮🇹 Serie A</option>
+                    <option value="78">🇩🇪 Bundesliga</option>
+                    <option value="61">🇫🇷 Ligue 1</option>
+                    <option value="128">🇦🇷 Liga Profesional Argentina</option>
+                    <option value="custom">✏️ ID personalizado</option>
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label>Temporada</label>
+                  <select value={importSeason} onChange={e=>setImportSeason(e.target.value)} style={{width:'100%',padding:'11px 14px',borderRadius:'var(--radius)',border:'1px solid var(--border)',background:'var(--card2)',color:'var(--text)',fontSize:'14px',outline:'none',fontFamily:'DM Sans,sans-serif'}}>
+                    <option value="2026">2026</option>
+                    <option value="2025">2025</option>
+                    <option value="2024">2024</option>
+                    <option value="2023">2023</option>
+                    <option value="2022">2022</option>
+                  </select>
+                </div>
+                {importLeague === 'custom' && (
+                  <div className="form-group" style={{gridColumn:'1/-1'}}>
+                    <label>ID de liga personalizado</label>
+                    <input type="number" value={importCustomId} onChange={e=>setImportCustomId(e.target.value)} placeholder="Ej: 13"/>
+                  </div>
+                )}
               </div>
-              <button className="btn btn-primary" style={{whiteSpace:'nowrap',flexShrink:0}} onClick={handleImport} disabled={importing}>
-                {importing ? 'Importando...' : '⬇ Importar fixture'}
+              {importMsg && <div style={{fontSize:'12px',color:'var(--green)',marginBottom:'10px'}}>⏳ {importMsg}</div>}
+              <button className="btn btn-primary" onClick={handleImport} disabled={importing}>
+                {importing ? 'Importando...' : '⬇ Importar partidos'}
               </button>
             </div>
             <div className={`card ${styles.formCard}`}>
