@@ -5,17 +5,21 @@ import { collection, onSnapshot, query, orderBy, doc, runTransaction, serverTime
 import { useAuth } from '../context/AuthContext'
 import Navbar from '../components/Navbar'
 import BottomNav from '../components/BottomNav'
+import { useLiveSync } from '../hooks/useLiveSync'
 import styles from './Fixture.module.css'
 
 export default function Fixture() {
   const { user, userData, refreshUserData } = useAuth()
   const navigate = useNavigate()
   const [partidos, setPartidos] = useState([])
-  const [selOdd, setSelOdd] = useState({}) // partidoId -> { equipo, cuota }
-  const [modal, setModal] = useState(null) // { partido, equipo, cuota }
+  const [selOdd, setSelOdd] = useState({})
+  const [modal, setModal] = useState(null)
   const [monto, setMonto] = useState(1000)
   const [loading, setLoading] = useState(false)
   const [msg, setMsg] = useState('')
+
+  // Sincronización automática con API-Football cada 2 minutos
+  useLiveSync()
 
   useEffect(() => {
     const q = query(collection(db, 'partidos'), orderBy('fecha', 'asc'))

@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react'
 import { db } from '../firebase/config'
-import { collection, query, onSnapshot, doc, updateDoc, addDoc, serverTimestamp, orderBy, runTransaction, getDoc } from 'firebase/firestore'
+import { collection, query, onSnapshot, doc, updateDoc, addDoc, serverTimestamp, orderBy, runTransaction } from 'firebase/firestore'
 import { useAuth } from '../context/AuthContext'
 import Navbar from '../components/Navbar'
+import { importWorldCupFixtures } from '../utils/importFixtures'
 import styles from './Admin.module.css'
 
 // UIDs de admins — reemplazá con tu UID de Firebase
@@ -14,10 +15,24 @@ export default function Admin() {
   const [partidos, setPartidos] = useState([])
   const [solicitudes, setSolicitudes] = useState([])
   const [apuestas, setApuestas] = useState([])
-  const [newPartido, setNewPartido] = useState({ local:'', localName:'', visitante:'', visitanteName:'', hora:'', fase:'', cuotaLocal:2.0, cuotaEmpate:3.2, cuotaVisitante:2.5 })
+  const [newPartido, setNewPartido] = useState({ local:'', localName:'', visitante:'', visitanteName:'', hora:'', fase:'', cuotaLocal:2.0, cuotaEmpate:3.2, cuotaVisitante:2.5, apiFixtureId:'' })
   const [msg, setMsg] = useState('')
 
-  const isAdmin = ADMIN_UIDS.includes(user?.uid)
+  const [importing, setImporting] = useState(false)
+  const [importMsg, setImportMsg] = useState('')
+
+  const handleImport = async () => {
+    setImporting(true)
+    setImportMsg('Iniciando importación...')
+    const result = await importWorldCupFixtures((msg) => setImportMsg(msg))
+    if (result.success) {
+      setMsg(`✓ ${result.count} partidos importados${result.demo ? ' (Mundial 2022 demo)' : ''}`)
+    } else {
+      setMsg('Error: ' + result.error)
+    }
+    setImportMsg('')
+    setImporting(false)
+  }
 
   useEffect(() => {
     const unsub1 = onSnapshot(query(collection(db,'partidos'), orderBy('fecha','asc')), snap => setPartidos(snap.docs.map(d=>({id:d.id,...d.data()}))))
@@ -33,11 +48,12 @@ export default function Admin() {
         cuotaLocal: parseFloat(newPartido.cuotaLocal),
         cuotaEmpate: parseFloat(newPartido.cuotaEmpate),
         cuotaVisitante: parseFloat(newPartido.cuotaVisitante),
+        apiFixtureId: newPartido.apiFixtureId ? parseInt(newPartido.apiFixtureId) : null,
         estado: 'proximo',
         fecha: serverTimestamp()
       })
       setMsg('✓ Partido agregado')
-      setNewPartido({local:'',localName:'',visitante:'',visitanteName:'',hora:'',fase:'',cuotaLocal:2.0,cuotaEmpate:3.2,cuotaVisitante:2.5})
+      setNewPartido({local:'',localName:'',visitante:'',visitanteName:'',hora:'',fase:'',cuotaLocal:2.0,cuotaEmpate:3.2,cuotaVisitante:2.5,apiFixtureId:''})
     } catch { setMsg('Error al agregar partido') }
   }
 
@@ -127,6 +143,16 @@ export default function Admin() {
 
         {tab === 'partidos' && (
           <>
+            <div className={`card ${styles.formCard}`} style={{marginBottom:'12px',display:'flex',alignItems:'center',justifyContent:'space-between',gap:'12px'}}>
+              <div>
+                <div style={{fontWeight:500,fontSize:'14px'}}>Importar partidos automáticamente</div>
+                <div style={{fontSize:'12px',color:'var(--muted)',marginTop:'3px'}}>Trae todos los partidos del Mundial desde API-Football</div>
+                {importMsg && <div style={{fontSize:'12px',color:'var(--green)',marginTop:'6px'}}>⏳ {importMsg}</div>}
+              </div>
+              <button className="btn btn-primary" style={{whiteSpace:'nowrap',flexShrink:0}} onClick={handleImport} disabled={importing}>
+                {importing ? 'Importando...' : '⬇ Importar fixture'}
+              </button>
+            </div>
             <div className={`card ${styles.formCard}`}>
               <div className="section-title" style={{fontSize:'16px',marginBottom:'14px'}}>Agregar partido</div>
               <div className={styles.grid2}>
@@ -139,6 +165,7 @@ export default function Admin() {
                 <div className="form-group"><label>Cuota local</label><input type="number" step="0.1" value={newPartido.cuotaLocal} onChange={e=>setNewPartido({...newPartido,cuotaLocal:e.target.value})}/></div>
                 <div className="form-group"><label>Cuota empate</label><input type="number" step="0.1" value={newPartido.cuotaEmpate} onChange={e=>setNewPartido({...newPartido,cuotaEmpate:e.target.value})}/></div>
                 <div className="form-group"><label>Cuota visitante</label><input type="number" step="0.1" value={newPartido.cuotaVisitante} onChange={e=>setNewPartido({...newPartido,cuotaVisitante:e.target.value})}/></div>
+                <div className="form-group" style={{gridColumn:'1/-1'}}><label>ID Fixture API-Football (opcional — para resultados automáticos)</label><input type="number" value={newPartido.apiFixtureId} onChange={e=>setNewPartido({...newPartido,apiFixtureId:e.target.value})} placeholder="Ej: 1035693"/></div>
               </div>
               <button className="btn btn-primary" onClick={agregarPartido}>+ Agregar partido</button>
             </div>
@@ -217,5 +244,3 @@ export default function Admin() {
     </div>
   )
 }
-
-
