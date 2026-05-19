@@ -119,6 +119,8 @@ export default function Admin() {
     setMsg('✓ Retiro procesado')
   }
 
+  const isAdmin = ADMIN_UIDS.includes(user?.uid)
+
   if (!isAdmin) return (
     <div><Navbar /><div style={{padding:'40px',textAlign:'center',color:'var(--muted)'}}>Acceso restringido</div></div>
   )
