@@ -1,15 +1,7 @@
 import { db } from '../firebase/config'
-import { collection, addDoc, getDocs, query, where, serverTimestamp } from 'firebase/firestore'
+import { collection, addDoc, getDocs, serverTimestamp } from 'firebase/firestore'
 
-const API_KEY = '7899dd7698fa657b0f402b2b7d47851f'
-const BASE_URL = 'https://v3.football.api-sports.io'
-const WORLD_CUP_LEAGUE = 1
-const SEASON = 2026
-
-const headers = {
-  'x-apisports-key': API_KEY,
-  'x-apisports-host': 'v3.football.api-sports.io'
-}
+const API_BASE = '/api/fixtures'
 
 // Mapeo de país a emoji de bandera
 const FLAG_MAP = {
@@ -62,22 +54,17 @@ export async function importWorldCupFixtures(onProgress) {
   try {
     onProgress?.('Consultando API de partidos...')
 
-    const res = await fetch(
-      `${BASE_URL}/fixtures?league=${WORLD_CUP_LEAGUE}&season=${SEASON}`,
-      { headers }
-    )
+    const res = await fetch(`${API_BASE}?league=1&season=2026`)
     const data = await res.json()
     const fixtures = data.response || []
 
     if (!fixtures.length) {
-      // Si no hay fixtures del 2026 aún, usar datos de prueba del Mundial 2022
       onProgress?.('Mundial 2026 no disponible aún. Importando Mundial 2022 como demo...')
       return importWorldCup2022(onProgress)
     }
 
     onProgress?.(`Encontrados ${fixtures.length} partidos. Importando...`)
 
-    // Verificar cuáles ya existen
     const existingSnap = await getDocs(collection(db, 'partidos'))
     const existingIds = new Set(existingSnap.docs.map(d => d.data().apiFixtureId))
 
@@ -120,13 +107,9 @@ export async function importWorldCupFixtures(onProgress) {
   }
 }
 
-// Demo con Mundial 2022 si el 2026 no está disponible aún
 async function importWorldCup2022(onProgress) {
   try {
-    const res = await fetch(
-      `${BASE_URL}/fixtures?league=${WORLD_CUP_LEAGUE}&season=2022`,
-      { headers }
-    )
+    const res = await fetch(`${API_BASE}?league=1&season=2022`)
     const data = await res.json()
     const fixtures = data.response || []
 
