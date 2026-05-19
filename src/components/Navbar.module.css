@@ -1,0 +1,39 @@
+.nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(8,13,11,0.96);
+  backdrop-filter: blur(10px);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+
+.logo {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 18px;
+  color: var(--green);
+  letter-spacing: 2px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.saldo {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--green);
+}
+
+.avatarWrap {
+  cursor: pointer;
+  transition: opacity .2s;
+}
+.avatarWrap:hover { opacity: 0.8; }
